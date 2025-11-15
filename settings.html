@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Settings</h2>
+<form method="POST">
+  <label>Server token (demo): <input type="text" name="server_token" placeholder="ganti_by_env"></label>
+  <p>Catatan: untuk produksi simpan token di env variable (SERVER_TOKEN).</p>
+  <button type="submit">Simpan (demo)</button>
+</form>
+{% endblock %}

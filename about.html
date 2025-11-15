@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Hero Section -->
+<div class="about-hero">
+  <div class="hero-content">
+    <div class="hero-icon">
+      <i class="fas fa-flask animated-flask"></i>
+    </div>
+    <h1>W-Dose pH Controller</h1>
+    <p class="hero-subtitle">Sistem Monitoring dan Kontrol pH Otomatis Berbasis IoT</p>
+    <div class="hero-badges">
+      <span class="badge badge-primary"><i class="fas fa-wifi"></i> IoT Ready</span>
+      <span class="badge badge-success"><i class="fas fa-chart-line"></i> Real-time</span>
+      <span class="badge badge-info"><i class="fas fa-mobile-alt"></i> Mobile Friendly</span>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="quick-stats">
+  <div class="stat-card">
+    <div class="stat-icon">
+      <i class="fas fa-eye"></i>
+    </div>
+    <div class="stat-info">
+      <h3>Real-time Monitoring</h3>
+      <p>Pantau pH secara langsung</p>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">
+      <i class="fas fa-cog"></i>
+    </div>
+    <div class="stat-info">
+      <h3>Auto Control</h3>
+      <p>Kontrol otomatis buffer</p>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">
+      <i class="fas fa-history"></i>
+    </div>
+    <div class="stat-info">
+      <h3>Data Logging</h3>
+      <p>Simpan semua aktivitas</p>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">
+      <i class="fas fa-shield-alt"></i>
+    </div>
+    <div class="stat-info">
+      <h3>Secure Access</h3>
+      <p>Akses yang aman</p>
+    </div>
+  </div>
+</div>
+
+<!-- User Guide Section -->
+<div class="content-section">
+  <h2 class="section-title">
+    <i class="fas fa-book-open"></i>
+    Panduan Penggunaan
+  </h2>
+  
+  <div class="guide-steps">
+    <div class="step-card">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <h3>Akses Dashboard</h3>
+        <p>Buka halaman <strong>Dashboard</strong> untuk melihat status pH saat ini, grafik real-time, dan statistik sistem.</p>
+        <div class="step-features">
+          <span class="feature-tag"><i class="fas fa-chart-line"></i> Grafik Real-time</span>
+          <span class="feature-tag"><i class="fas fa-bell"></i> Alert Otomatis</span>
+          <span class="feature-tag"><i class="fas fa-tachometer-alt"></i> Metrics</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <h3>Kontrol Manual</h3>
+        <p>Gunakan halaman <strong>Manual Control</strong> untuk mengontrol servo, mengatur dispensing buffer, dan mengkalibrasi sistem.</p>
+        <div class="step-features">
+          <span class="feature-tag"><i class="fas fa-sliders-h"></i> Servo Control</span>
+          <span class="feature-tag"><i class="fas fa-flask"></i> Buffer Dispense</span>
+          <span class="feature-tag"><i class="fas fa-tools"></i> Kalibrasi</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <h3>Monitor Riwayat</h3>
+        <p>Periksa halaman <strong>Riwayat pH</strong> untuk melihat data historis, tren pH, dan analisis performa sistem.</p>
+        <div class="step-features">
+          <span class="feature-tag"><i class="fas fa-database"></i> Data Historis</span>
+          <span class="feature-tag"><i class="fas fa-download"></i> Export Data</span>
+          <span class="feature-tag"><i class="fas fa-filter"></i> Filter & Search</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-number">4</div>
+      <div class="step-content">
+        <h3>Cek Activity Log</h3>
+        <p>Pantau semua aktivitas sistem di halaman <strong>Log</strong> untuk tracking perintah dan troubleshooting.</p>
+        <div class="step-features">
+          <span class="feature-tag"><i class="fas fa-list-alt"></i> Command Log</span>
+          <span class="feature-tag"><i class="fas fa-clock"></i> Timestamp</span>
+          <span class="feature-tag"><i class="fas fa-search"></i> Search Log</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Features Section -->
+<div class="content-section features-section">
+  <h2 class="section-title">
+    <i class="fas fa-star"></i>
+    Fitur Unggulan
+  </h2>
+  
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon monitoring">
+        <i class="fas fa-eye"></i>
+      </div>
+      <h3>Real-time Monitoring</h3>
+      <p>Pantau nilai pH secara real-time dengan update otomatis setiap 5 detik menggunakan teknologi WebSocket.</p>
+      <ul class="feature-list">
+        <li><i class="fas fa-check"></i> Update setiap 5 detik</li>
+        <li><i class="fas fa-check"></i> Grafik interaktif</li>
+        <li><i class="fas fa-check"></i> Alert otomatis</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon control">
+        <i class="fas fa-gamepad"></i>
+      </div>
+      <h3>Smart Control</h3>
+      <p>Kontrol servo motor dan dispensing buffer dengan presisi tinggi, dilengkapi mode otomatis dan manual.</p>
+      <ul class="feature-list">
+        <li><i class="fas fa-check"></i> Mode otomatis</li>
+        <li><i class="fas fa-check"></i> Kontrol manual</li>
+        <li><i class="fas fa-check"></i> Preset posisi</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon data">
+        <i class="fas fa-chart-area"></i>
+      </div>
+      <h3>Advanced Analytics</h3>
+      <p>Analisis data pH dengan grafik interaktif, tren analysis, dan export data untuk keperluan penelitian.</p>
+      <ul class="feature-list">
+        <li><i class="fas fa-check"></i> Grafik interaktif</li>
+        <li><i class="fas fa-check"></i> Trend analysis</li>
+        <li><i class="fas fa-check"></i> Export CSV/Excel</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon mobile">
+        <i class="fas fa-mobile-alt"></i>
+      </div>
+      <h3>Mobile Responsive</h3>
+      <p>Akses sistem dari perangkat mobile dengan antarmuka yang responsif dan touch-friendly.</p>
+      <ul class="feature-list">
+        <li><i class="fas fa-check"></i> Responsive design</li>
+        <li><i class="fas fa-check"></i> Touch friendly</li>
+        <li><i class="fas fa-check"></i> Cross-platform</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon logging">
+        <i class="fas fa-clipboard-list"></i>
+      </div>
+      <h3>Complete Logging</h3>
+      <p>Sistem logging lengkap untuk tracking semua aktivitas, perintah, dan status sistem.</p>
+      <ul class="feature-list">
+        <li><i class="fas fa-check"></i> Activity logging</li>
+        <li><i class="fas fa-check"></i> Command history</li>
+        <li><i class="fas fa-check"></i> Error tracking</li>
+      </ul>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon iot">
+        <i class="fas fa-wifi"></i>
+      </div>
+      <h3>IoT Integration</h3>
+      <p>Integrasi dengan ESP32 menggunakan protokol HTTP dan WebSocket untuk komunikasi real-time.</p>
+      <ul class="feature-list">
+        <li><i class="fas fa-check"></i> ESP32 compatible</li>
+        <li><i class="fas fa-check"></i> WiFi communication</li>
+        <li><i class="fas fa-check"></i> API endpoints</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Security Section -->
+<div class="content-section security-section">
+  <h2 class="section-title">
+    <i class="fas fa-shield-alt"></i>
+    Keamanan & Privasi
+  </h2>
+  
+  <div class="security-grid">
+    <div class="security-card">
+      <div class="security-icon">
+        <i class="fas fa-key"></i>
+      </div>
+      <h3>Token Authentication</h3>
+      <p>Sistem menggunakan token authentication untuk memvalidasi komunikasi antara ESP32 dan server.</p>
+      <div class="security-status">
+        <span class="status-badge implemented"><i class="fas fa-check"></i> Implemented</span>
+      </div>
+    </div>
+
+    <div class="security-card">
+      <div class="security-icon">
+        <i class="fas fa-network-wired"></i>
+      </div>
+      <h3>Network Security</h3>
+      <p>Akses terbatas pada jaringan lokal dengan konfigurasi firewall dan port security.</p>
+      <div class="security-status">
+        <span class="status-badge implemented"><i class="fas fa-check"></i> Active</span>
+      </div>
+    </div>
+
+    <div class="security-card">
+      <div class="security-icon">
+        <i class="fas fa-lock"></i>
+      </div>
+      <h3>HTTPS Support</h3>
+      <p>Untuk deployment production, disarankan menggunakan HTTPS dengan SSL certificate.</p>
+      <div class="security-status">
+        <span class="status-badge recommended"><i class="fas fa-exclamation-triangle"></i> Recommended</span>
+      </div>
+    </div>
+
+    <div class="security-card">
+      <div class="security-icon">
+        <i class="fas fa-database"></i>
+      </div>
+      <h3>Data Protection</h3>
+      <p>Data disimpan secara lokal dengan enkripsi database dan backup otomatis.</p>
+      <div class="security-status">
+        <span class="status-badge implemented"><i class="fas fa-check"></i> Protected</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="security-recommendations">
+    <h3><i class="fas fa-lightbulb"></i> Rekomendasi Keamanan</h3>
+    <div class="recommendation-list">
+      <div class="recommendation-item">
+        <i class="fas fa-shield-alt"></i>
+        <div>
+          <strong>Gunakan VPN</strong>
+          <p>Untuk akses remote, gunakan VPN untuk koneksi yang aman</p>
+        </div>
+      </div>
+      <div class="recommendation-item">
+        <i class="fas fa-user-lock"></i>
+        <div>
+          <strong>User Authentication</strong>
+          <p>Implementasikan sistem login untuk multiple user</p>
+        </div>
+      </div>
+      <div class="recommendation-item">
+        <i class="fas fa-sync-alt"></i>
+        <div>
+          <strong>Regular Updates</strong>
+          <p>Update sistem secara berkala untuk patch keamanan</p>
+        </div>
+      </div>
+      <div class="recommendation-item">
+        <i class="fas fa-copy"></i>
+        <div>
+          <strong>Backup Data</strong>
+          <p>Lakukan backup data secara berkala ke external storage</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Technical Specs -->
+<div class="content-section tech-specs-section">
+  <h2 class="section-title">
+    <i class="fas fa-microchip"></i>
+    Spesifikasi Teknis
+  </h2>
+  
+  <div class="specs-grid">
+    <div class="spec-category">
+      <h3><i class="fas fa-server"></i> Server Requirements</h3>
+      <ul class="spec-list">
+        <li><span class="spec-label">OS:</span> Windows/Linux/macOS</li>
+        <li><span class="spec-label">Python:</span> 3.7 atau lebih baru</li>
+        <li><span class="spec-label">RAM:</span> Minimal 512MB</li>
+        <li><span class="spec-label">Storage:</span> 100MB free space</li>
+        <li><span class="spec-label">Network:</span> WiFi/Ethernet</li>
+      </ul>
+    </div>
+
+    <div class="spec-category">
+      <h3><i class="fas fa-microchip"></i> Hardware ESP32</h3>
+      <ul class="spec-list">
+        <li><span class="spec-label">MCU:</span> ESP32 (dual-core)</li>
+        <li><span class="spec-label">WiFi:</span> 802.11 b/g/n (2.4GHz)</li>
+        <li><span class="spec-label">GPIO:</span> Pin 18 (Servo), Pin 34 (pH)</li>
+        <li><span class="spec-label">Voltage:</span> 3.3V logic, 5V servo</li>
+        <li><span class="spec-label">Sensors:</span> pH sensor analog</li>
+      </ul>
+    </div>
+
+    <div class="spec-category">
+      <h3><i class="fas fa-code"></i> Technology Stack</h3>
+      <ul class="spec-list">
+        <li><span class="spec-label">Backend:</span> Flask + SocketIO</li>
+        <li><span class="spec-label">Database:</span> SQLite</li>
+        <li><span class="spec-label">Frontend:</span> HTML5 + CSS3 + JS</li>
+        <li><span class="spec-label">Charts:</span> Chart.js</li>
+        <li><span class="spec-label">Icons:</span> Font Awesome</li>
+      </ul>
+    </div>
+
+    <div class="spec-category">
+      <h3><i class="fas fa-mobile-alt"></i> Browser Support</h3>
+      <ul class="spec-list">
+        <li><span class="spec-label">Chrome:</span> 90+ ✓</li>
+        <li><span class="spec-label">Firefox:</span> 88+ ✓</li>
+        <li><span class="spec-label">Safari:</span> 14+ ✓</li>
+        <li><span class="spec-label">Edge:</span> 90+ ✓</li>
+        <li><span class="spec-label">Mobile:</span> iOS 14+, Android 10+ ✓</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

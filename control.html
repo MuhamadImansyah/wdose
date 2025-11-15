@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+{% block content %}
+<!-- CONTROL PAGE - NO INSTANT VERSION - UPDATED -->
+<div class="control-container">
+  <div class="control-header">
+    <h2><i class="fas fa-sliders-h"></i> Kontrol Manual</h2>
+    <p>Kendalikan perangkat pH secara manual dari halaman ini</p>
+  </div>
+
+  <div class="controls-grid">
+    <!-- Widget Kontrol Buffer -->
+    <div class="widget buffer-control-widget">
+      <h2><i class="fas fa-flask"></i> Kontrol Buffer</h2>
+      <div class="control-description">
+        <p>Gunakan kontrol ini untuk menambahkan buffer pH ke dalam sistem.</p>
+      </div>
+      
+      <div class="dispense-controls">
+        <div class="dispense-amount">
+          <label for="dispense_duration">Durasi Penuangan (ms):</label>
+          <input type="range" id="dispense_duration" min="500" max="3000" value="1200" step="100">
+          <div class="range-value"><span id="duration_value">1200</span> ms</div>
+        </div>
+        
+        <div class="dispense-buttons">
+          <button id="dispense_btn" class="primary-action-btn">
+            <i class="fas fa-tint"></i> Mulai Menuang Buffer
+          </button>
+        </div>
+        
+        <div class="dispense-status" id="dispense_status">
+          <i class="fas fa-info-circle"></i> Siap untuk menuang
+        </div>
+      </div>
+    </div>
+
+    <!-- Widget Kontrol Servo -->
+    <div class="widget servo-control-widget">
+      <h2><i class="fas fa-cog"></i> Kontrol Motor Servo</h2>
+      <div class="control-description">
+        <p>Kontrol posisi servo secara manual untuk mengatur aliran cairan pH buffer. Servo terhubung ke GPIO18.</p>
+      </div>
+      
+      <div class="servo-controls">
+        <div class="servo-visual">
+          <div class="servo-container">
+            <div class="servo-base"></div>
+            <div class="servo-arm" id="servo_arm"></div>
+            <div class="servo-dot"></div>
+          </div>
+          <div class="servo-position" id="servo_position">90°</div>
+        </div>
+        
+        <div class="servo-slider">
+          <label for="servo_range">Posisi Servo (0° - 180°):</label>
+          <input type="range" id="servo_range" min="0" max="180" value="90" step="1">
+          <div class="range-value"><span id="servo_val">90</span>°</div>
+        </div>
+        
+        <div class="servo-presets">
+          <h4>Preset Posisi:</h4>
+          <div class="preset-buttons">
+            <button class="preset-btn" data-angle="0" title="Posisi Tertutup">
+              <i class="fas fa-lock"></i> 0°
+            </button>
+            <button class="preset-btn" data-angle="45" title="Posisi 1/4 Terbuka">
+              <i class="fas fa-unlock"></i> 45°
+            </button>
+            <button class="preset-btn" data-angle="90" title="Posisi Tengah">
+              <i class="fas fa-adjust"></i> 90°
+            </button>
+            <button class="preset-btn" data-angle="135" title="Posisi 3/4 Terbuka">
+              <i class="fas fa-unlock"></i> 135°
+            </button>
+            <button class="preset-btn" data-angle="180" title="Posisi Sepenuhnya Terbuka">
+              <i class="fas fa-unlock-alt"></i> 180°
+            </button>
+          </div>
+        </div>
+        
+        <div class="servo-actions">
+          <button id="servo_move_btn" class="primary-action-btn">
+            <i class="fas fa-paper-plane"></i> Kirim Posisi Servo
+          </button>
+          <button id="servo_test_btn" class="secondary-action-btn">
+            <i class="fas fa-play-circle"></i> Test Sweep
+          </button>
+        </div>
+        
+        <div class="servo-info">
+          <small><i class="fas fa-info-circle"></i> Servo akan bergerak secara bertahap untuk melindungi mekanisme</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Widget Status Perangkat (dipindahkan dari bawah) -->
+    <div class="widget device-status-widget">
+      <h2><i class="fas fa-info-circle"></i> Status Perangkat</h2>
+      <div class="device-status">
+        <div class="status-item">
+          <span class="status-label">ESP32:</span>
+          <span class="status-value" id="esp32_status">
+            <i class="fas fa-circle status-dot connecting"></i> Menghubungkan...
+          </span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Servo:</span>
+          <span class="status-value" id="servo_device_status">
+            <i class="fas fa-circle status-dot"></i> Siaga
+          </span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Sensor pH:</span>
+          <span class="status-value" id="ph_sensor_status">
+            <i class="fas fa-circle status-dot"></i> Aktif
+          </span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Terakhir Diperbarui:</span>
+          <span class="status-value" id="last_update">-</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Log Aktivitas -->
+  <div class="activity-log-container">
+    <div class="widget activity-log-widget">
+      <h2><i class="fas fa-history"></i> Log Aktivitas</h2>
+      <div class="log-controls">
+        <button id="clear_log_btn" class="secondary-action-btn">
+          <i class="fas fa-trash"></i> Hapus Log
+        </button>
+        <button id="refresh_log_btn" class="secondary-action-btn">
+          <i class="fas fa-sync"></i> Refresh
+        </button>
+      </div>
+      <div class="activity-log" id="activity_log">
+        <div class="log-entry">
+          <span class="log-time">-</span>
+          <span class="log-message">Menunggu aktivitas...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // WebSocket connection
+  const socket = io();
+
+  // Inisialisasi
+  document.addEventListener('DOMContentLoaded', function() {
+    // Kontrol durasi penuangan
+    const durationSlider = document.getElementById('dispense_duration');
+    const durationValue = document.getElementById('duration_value');
+    
+    if (durationSlider && durationValue) {
+      durationSlider.addEventListener('input', function() {
+        durationValue.textContent = this.value;
+      });
+    }
+    
+    // Kontrol servo
+    const servoRange = document.getElementById('servo_range');
+    const servoVal = document.getElementById('servo_val');
+    const servoArm = document.getElementById('servo_arm');
+    const servoPosition = document.getElementById('servo_position');
+    const presetBtns = document.querySelectorAll('.preset-btn');
+    
+    if (servoRange && servoVal) {
+      servoRange.addEventListener('input', function() {
+        const angle = this.value;
+        servoVal.textContent = angle;
+        if (servoPosition) servoPosition.textContent = angle + '°';
+        
+        // Update visualisasi servo
+        if (servoArm) {
+          const rotation = (angle - 90); // Center at 90 degrees
+          servoArm.style.transform = `rotate(${rotation}deg)`;
+        }
+      });
+      
+      // Inisialisasi posisi awal
+      servoRange.dispatchEvent(new Event('input'));
+    }
+    
+    // Tombol preset servo
+    presetBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const angle = this.getAttribute('data-angle');
+        if (servoRange) {
+          servoRange.value = angle;
+          servoRange.dispatchEvent(new Event('input'));
+        }
+      });
+    });
+    
+    // Test sweep function
+    const servoTestBtn = document.getElementById('servo_test_btn');
+    if (servoTestBtn) {
+      servoTestBtn.addEventListener('click', async function() {
+        const originalAngle = servoRange.value;
+        servoTestBtn.disabled = true;
+        servoTestBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+        
+        // Test sequence: 0° -> 90° -> 180° -> 90° -> original
+        const testSequence = [0, 90, 180, originalAngle];
+        
+        for (let i = 0; i < testSequence.length; i++) {
+          const angle = testSequence[i];
+          servoRange.value = angle;
+          servoRange.dispatchEvent(new Event('input'));
+          
+          // Send command to servo
+          await fetch('/api/command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cmd: 'servo_move', detail: { angle: angle } })
+          });
+          
+          addLogEntry(`Test: Servo moved to ${angle}°`);
+          
+          // Wait between movements
+          if (i < testSequence.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
+        }
+        
+        servoTestBtn.disabled = false;
+        servoTestBtn.innerHTML = '<i class="fas fa-play-circle"></i> Test Sweep';
+        showNotification('Servo test completed', 'success');
+      });
+    }
+    
+    // Tombol clear log
+    const clearLogBtn = document.getElementById('clear_log_btn');
+    if (clearLogBtn) {
+      clearLogBtn.addEventListener('click', function() {
+        const logContainer = document.getElementById('activity_log');
+        if (logContainer) {
+          logContainer.innerHTML = '<div class="log-entry"><span class="log-time">-</span><span class="log-message">Log telah dibersihkan</span></div>';
+        }
+      });
+    }
+    
+    // Tombol refresh log
+    const refreshLogBtn = document.getElementById('refresh_log_btn');
+    if (refreshLogBtn) {
+      refreshLogBtn.addEventListener('click', function() {
+        showNotification('Log telah diperbarui', 'success');
+      });
+    }
+    
+    // Fungsi untuk menambah log aktivitas
+    function addLogEntry(message) {
+      const logContainer = document.getElementById('activity_log');
+      if (logContainer) {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString();
+        
+        const logEntry = document.createElement('div');
+        logEntry.className = 'log-entry';
+        logEntry.innerHTML = `
+          <span class="log-time">${timeString}</span>
+          <span class="log-message">${message}</span>
+        `;
+        
+        // Hapus pesan "Menunggu aktivitas" jika ada
+        const waitingMsg = logContainer.querySelector('.log-entry');
+        if (waitingMsg && waitingMsg.textContent.includes('Menunggu aktivitas')) {
+          logContainer.removeChild(waitingMsg);
+        }
+        
+        // Tambahkan entri baru di awal
+        logContainer.insertBefore(logEntry, logContainer.firstChild);
+        
+        // Batasi jumlah log yang ditampilkan
+        while (logContainer.children.length > 20) {
+          logContainer.removeChild(logContainer.lastChild);
+        }
+      }
+    }
+    
+    // Fungsi notifikasi
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.classList.add('show');
+      }, 10);
+
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 300);
+      }, 3000);
+    }
+    
+    // Update status perangkat
+    function updateDeviceStatus() {
+      const now = new Date();
+      const timeString = now.toLocaleString();
+      const lastUpdateEl = document.getElementById('last_update');
+      
+      if (lastUpdateEl) {
+        lastUpdateEl.textContent = timeString;
+      }
+    }
+    
+    // Update status ESP32 saat terhubung
+    socket.on('connect', () => {
+      const esp32Status = document.getElementById('esp32_status');
+      if (esp32Status) {
+        esp32Status.innerHTML = '<i class="fas fa-circle status-dot connected"></i> Terhubung';
+      }
+      addLogEntry('Terhubung ke server');
+      updateDeviceStatus();
+    });
+    
+    // Update status ESP32 saat terputus
+    socket.on('disconnect', () => {
+      const esp32Status = document.getElementById('esp32_status');
+      if (esp32Status) {
+        esp32Status.innerHTML = '<i class="fas fa-circle status-dot disconnected"></i> Terputus';
+      }
+      addLogEntry('Terputus dari server');
+    });
+    
+    // Override fungsi tombol dispense untuk menambah log
+    const dispenseBtn = document.getElementById('dispense_btn');
+    if (dispenseBtn) {
+      dispenseBtn.addEventListener('click', async () => {
+        const duration = document.getElementById('dispense_duration').value;
+        const dispenseStatus = document.getElementById('dispense_status');
+        
+        // Update status
+        if (dispenseStatus) {
+          dispenseStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menuang buffer...';
+        }
+        
+        const resp = await fetch('/api/command', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cmd: 'dispense_buffer', detail: `manual_control_duration_${duration}` })
+        });
+        
+        const j = await resp.json();
+        
+        // Update status
+        if (dispenseStatus) {
+          dispenseStatus.innerHTML = '<i class="fas fa-check-circle"></i> Buffer berhasil dituangkan';
+        }
+        
+        addLogEntry(`Menuang buffer selama ${duration}ms`);
+        showNotification(`Perintah dikirim: ${j.cmd}`, 'success');
+        updateDeviceStatus();
+        
+        // Reset status setelah beberapa detik
+        setTimeout(() => {
+          if (dispenseStatus) {
+            dispenseStatus.innerHTML = '<i class="fas fa-info-circle"></i> Siap untuk menuang';
+          }
+        }, 3000);
+      });
+    }
+    
+    // Override fungsi tombol servo untuk menambah log
+    const servoMoveBtn = document.getElementById('servo_move_btn');
+    if (servoMoveBtn) {
+      servoMoveBtn.addEventListener('click', async () => {
+        const angle = servoRange.value;
+        const servoDeviceStatus = document.getElementById('servo_device_status');
+        
+        // Update status widget
+        if (servoDeviceStatus) {
+          servoDeviceStatus.innerHTML = '<i class="fas fa-circle status-dot connecting"></i> Menggerakkan...';
+        }
+        
+        // Disable button temporarily
+        servoMoveBtn.disabled = true;
+        servoMoveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
+        
+        try {
+          const resp = await fetch('/api/command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cmd: 'servo_move', detail: { angle: parseInt(angle) } })
+          });
+          
+          const j = await resp.json();
+          
+          if (resp.ok) {
+            // Update status
+            if (servoDeviceStatus) {
+              servoDeviceStatus.innerHTML = '<i class="fas fa-circle status-dot connected"></i> Posisi ' + angle + '°';
+            }
+            
+            addLogEntry(`Servo berhasil dipindahkan ke posisi ${angle}°`);
+            showNotification(`Servo moved to ${angle}°`, 'success');
+          } else {
+            throw new Error('Failed to send command');
+          }
+          
+        } catch (error) {
+          // Error handling
+          if (servoDeviceStatus) {
+            servoDeviceStatus.innerHTML = '<i class="fas fa-circle status-dot disconnected"></i> Error';
+          }
+          
+          addLogEntry(`Error: Gagal menggerakkan servo ke ${angle}°`);
+          showNotification('Failed to move servo', 'error');
+        }
+        
+        // Re-enable button
+        servoMoveBtn.disabled = false;
+        servoMoveBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Posisi Servo';
+        updateDeviceStatus();
+        
+        // Reset status setelah beberapa detik
+        setTimeout(() => {
+          if (servoDeviceStatus) {
+            servoDeviceStatus.innerHTML = '<i class="fas fa-circle status-dot"></i> Siaga';
+          }
+        }, 3000);
+      });
+    }
+  });
+</script>
+{% endblock %}

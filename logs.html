@@ -1,0 +1,328 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="logs-container">
+  <div class="logs-header">
+    <h2><i class="fas fa-list-alt"></i> Log Perintah</h2>
+    <div class="logs-controls">
+      <div class="filter-controls">
+        <select id="command_filter" class="filter-select">
+          <option value="">Semua Perintah</option>
+          <option value="dispense_buffer">Dispense Buffer</option>
+          <option value="servo_move">Servo Move</option>
+        </select>
+        <input type="date" id="date_filter" class="filter-input">
+        <button id="filter_btn" class="secondary-action-btn"><i class="fas fa-filter"></i> Filter</button>
+        <button id="clear_filter_btn" class="secondary-action-btn"><i class="fas fa-times"></i> Hapus Filter</button>
+      </div>
+      <div class="export-controls">
+        <button id="export_csv_btn" class="secondary-action-btn"><i class="fas fa-file-csv"></i> Export CSV</button>
+        <button id="refresh_btn" class="secondary-action-btn"><i class="fas fa-sync"></i> Refresh</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="widget logs-table-widget">
+    <div class="table-info">
+      <span class="record-count">Menampilkan <span id="visible_count">{{ logs|length }}</span> dari <span id="total_count">{{ logs|length }}</span> log</span>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Perintah</th>
+            <th>Detail</th>
+            <th>Waktu</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="logs_table">
+          {% for l in logs %}
+          <tr data-command="{{ l.command }}" data-date="{{ l.timestamp.strftime('%Y-%m-%d') }}">
+            <td>{{ l.id }}</td>
+            <td>
+              <span class="command-badge {{ 'dispense' if l.command == 'dispense_buffer' else 'servo' if l.command == 'servo_move' else 'other' }}">
+                {% if l.command == 'dispense_buffer' %}
+                  <i class="fas fa-flask"></i> Dispense Buffer
+                {% elif l.command == 'servo_move' %}
+                  <i class="fas fa-cog"></i> Servo Move
+                {% else %}
+                  <i class="fas fa-code"></i> {{ l.command }}
+                {% endif %}
+              </span>
+            </td>
+            <td class="detail-cell">{{ l.detail }}</td>
+            <td>{{ l.timestamp }}</td>
+            <td>
+              <span class="status-badge success">
+                <i class="fas fa-check-circle"></i> Selesai
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="pagination-container">
+      <div class="pagination-info">
+        Menampilkan halaman <span id="current_page">1</span> dari <span id="total_pages">1</span>
+      </div>
+      <div class="pagination-controls">
+        <button id="prev_page" class="pagination-btn" disabled><i class="fas fa-chevron-left"></i></button>
+        <div class="page-numbers" id="page_numbers">
+          <span class="page-number active">1</span>
+        </div>
+        <button id="next_page" class="pagination-btn" disabled><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Variabel pagination
+    let currentPage = 1;
+    const rowsPerPage = 20;
+    const logsTable = document.getElementById('logs_table');
+    const allRows = logsTable.getElementsByTagName('tr');
+    const totalRows = allRows.length;
+    const totalPages = Math.ceil(totalRows / rowsPerPage);
+    
+    // Update info pagination
+    document.getElementById('total_pages').textContent = totalPages;
+    document.getElementById('total_count').textContent = totalRows;
+    
+    // Fungsi untuk menampilkan halaman tertentu
+    function showPage(page) {
+      // Sembunyikan semua baris
+      for (let i = 0; i < totalRows; i++) {
+        allRows[i].style.display = 'none';
+      }
+      
+      // Tampilkan baris untuk halaman ini
+      const start = (page - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+      
+      for (let i = start; i < end && i < totalRows; i++) {
+        allRows[i].style.display = '';
+      }
+      
+      // Update info pagination
+      document.getElementById('current_page').textContent = page;
+      document.getElementById('visible_count').textContent = Math.min(end, totalRows) - start;
+      
+      // Update nomor halaman
+      updatePageNumbers(page);
+      
+      // Update tombol navigasi
+      document.getElementById('prev_page').disabled = page === 1;
+      document.getElementById('next_page').disabled = page === totalPages;
+      
+      currentPage = page;
+    }
+    
+    // Fungsi untuk update nomor halaman
+    function updatePageNumbers(activePage) {
+      const pageNumbers = document.getElementById('page_numbers');
+      pageNumbers.innerHTML = '';
+      
+      // Tentukan rentang halaman yang ditampilkan
+      let startPage = Math.max(1, activePage - 2);
+      let endPage = Math.min(totalPages, startPage + 4);
+      
+      if (endPage - startPage < 4) {
+        startPage = Math.max(1, endPage - 4);
+      }
+      
+      // Tambahkan tombol halaman pertama jika tidak termasuk dalam rentang
+      if (startPage > 1) {
+        const firstPage = document.createElement('span');
+        firstPage.className = 'page-number';
+        firstPage.textContent = '1';
+        firstPage.addEventListener('click', () => showPage(1));
+        pageNumbers.appendChild(firstPage);
+        
+        if (startPage > 2) {
+          const ellipsis = document.createElement('span');
+          ellipsis.className = 'page-ellipsis';
+          ellipsis.textContent = '...';
+          pageNumbers.appendChild(ellipsis);
+        }
+      }
+      
+      // Tambahkan nomor halaman dalam rentang
+      for (let i = startPage; i <= endPage; i++) {
+        const pageNumber = document.createElement('span');
+        pageNumber.className = i === activePage ? 'page-number active' : 'page-number';
+        pageNumber.textContent = i;
+        pageNumber.addEventListener('click', () => showPage(i));
+        pageNumbers.appendChild(pageNumber);
+      }
+      
+      // Tambahkan tombol halaman terakhir jika tidak termasuk dalam rentang
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          const ellipsis = document.createElement('span');
+          ellipsis.className = 'page-ellipsis';
+          ellipsis.textContent = '...';
+          pageNumbers.appendChild(ellipsis);
+        }
+        
+        const lastPage = document.createElement('span');
+        lastPage.className = 'page-number';
+        lastPage.textContent = totalPages;
+        lastPage.addEventListener('click', () => showPage(totalPages));
+        pageNumbers.appendChild(lastPage);
+      }
+    }
+    
+    // Event listener untuk tombol navigasi
+    document.getElementById('prev_page').addEventListener('click', () => {
+      if (currentPage > 1) {
+        showPage(currentPage - 1);
+      }
+    });
+    
+    document.getElementById('next_page').addEventListener('click', () => {
+      if (currentPage < totalPages) {
+        showPage(currentPage + 1);
+      }
+    });
+    
+    // Fungsi filter
+    function applyFilter() {
+      const commandFilter = document.getElementById('command_filter').value;
+      const dateFilter = document.getElementById('date_filter').value;
+      
+      let visibleCount = 0;
+      
+      for (let i = 0; i < totalRows; i++) {
+        const row = allRows[i];
+        const command = row.getAttribute('data-command');
+        const date = row.getAttribute('data-date');
+        
+        let show = true;
+        
+        // Filter perintah
+        if (commandFilter && command !== commandFilter) {
+          show = false;
+        }
+        
+        // Filter tanggal
+        if (dateFilter && date !== dateFilter) {
+          show = false;
+        }
+        
+        row.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
+      }
+      
+      // Update info
+      document.getElementById('visible_count').textContent = visibleCount;
+      
+      // Reset ke halaman 1 dan tampilkan
+      currentPage = 1;
+      showPage(1);
+    }
+    
+    // Event listener untuk filter
+    document.getElementById('filter_btn').addEventListener('click', applyFilter);
+    
+    // Event listener untuk hapus filter
+    document.getElementById('clear_filter_btn').addEventListener('click', function() {
+      document.getElementById('command_filter').value = '';
+      document.getElementById('date_filter').value = '';
+      
+      // Tampilkan semua baris
+      for (let i = 0; i < totalRows; i++) {
+        allRows[i].style.display = '';
+      }
+      
+      // Update info
+      document.getElementById('visible_count').textContent = totalRows;
+      
+      // Reset ke halaman 1 dan tampilkan
+      currentPage = 1;
+      showPage(1);
+    });
+    
+    // Event listener untuk refresh
+    document.getElementById('refresh_btn').addEventListener('click', function() {
+      showNotification('Memperbarui data...', 'info');
+      // Implementasi refresh di sini
+      setTimeout(() => {
+        showNotification('Data telah diperbarui', 'success');
+        // Reload halaman
+        window.location.reload();
+      }, 1000);
+    });
+    
+    // Event listener untuk export CSV
+    document.getElementById('export_csv_btn').addEventListener('click', function() {
+      showNotification('Mengekspor data ke CSV...', 'info');
+      
+      // Implementasi export CSV
+      let csv = 'ID,Perintah,Detail,Waktu\n';
+      
+      for (let i = 0; i < totalRows; i++) {
+        if (allRows[i].style.display !== 'none') {
+          const cells = allRows[i].getElementsByTagName('td');
+          const id = cells[0].textContent;
+          
+          // Ekstrak teks perintah dari badge
+          const commandBadge = cells[1].getElementsByClassName('command-badge')[0];
+          let command = '';
+          if (commandBadge.classList.contains('dispense')) {
+            command = 'Dispense Buffer';
+          } else if (commandBadge.classList.contains('servo')) {
+            command = 'Servo Move';
+          } else {
+            command = commandBadge.textContent.trim();
+          }
+          
+          const detail = cells[2].textContent;
+          const time = cells[3].textContent;
+          
+          csv += `${id},"${command}","${detail}","${time}"\n`;
+        }
+      }
+      
+      // Buat dan download file CSV
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ph_logs_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      showNotification('Data berhasil diekspor', 'success');
+    });
+    
+    // Fungsi notifikasi
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.classList.add('show');
+      }, 10);
+
+      setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 300);
+      }, 3000);
+    }
+    
+    // Tampilkan halaman pertama
+    showPage(1);
+  });
+</script>
+{% endblock %}

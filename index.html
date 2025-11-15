@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PH Controller Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        html, body {
+            height: 100%;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        body {
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            flex: 0 0 auto;
+            max-width: 1200px;
+            width: 100%;
+            padding-left: 15px;
+            padding-right: 15px;
+        }
+
+        /* Membuat container persegi untuk dashboard */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: auto;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Memastikan semua card memiliki tinggi yang sama */
+        .equal-height-card {
+            height: 350px;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-right: -15px;
+            margin-left: -15px;
+        }
+
+        .col-md-6 {
+            flex: 0 0 50%;
+            max-width: 50%;
+            padding-right: 15px;
+            padding-left: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .col-md-6 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+        }
+
+        .dashboard-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+            overflow: hidden;
+            height: auto;
+            min-height: 0;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-connected {
+            background-color: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        .status-disconnected {
+            background-color: #dc3545;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+            }
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin-top: 10px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 250px;
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #ph-chart {
+            max-height: 250px !important;
+            width: 100% !important;
+        }
+
+        .value-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+
+        .control-btn {
+            min-width: 120px;
+        }
+
+        .settings-section {
+            background-color: #f1f3f5;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        /* pH Meter Styles */
+        .ph-meter-circle {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: linear-gradient(to right, 
+                #ff0000 0%, 
+                #ff9900 14%, 
+                #ffff00 28%, 
+                #00ff00 42%, 
+                #00ffff 56%, 
+                #0000ff 70%, 
+                #9900ff 84%, 
+                #ff00ff 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            margin: 0 auto;
+            flex-shrink: 0;
+        }
+
+        .ph-meter-circle::before {
+            content: "";
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background-color: white;
+            z-index: 1;
+        }
+
+        .ph-meter-circle .value-display {
+            position: relative;
+            z-index: 2;
+            font-size: 3rem;
+        }
+
+        .ph-scale {
+            bottom: -25px;
+        }
+
+        /* Pump Animation */
+        .pump-icon svg {
+            transition: all 0.3s ease;
+        }
+
+        .pump-active svg {
+            color: #28a745;
+            animation: drop-animation 1.5s infinite;
+        }
+
+        @keyframes drop-animation {
+            0% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(10px);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        /* Chart enhancements */
+        .chart-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+            overflow: hidden;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Status card styling */
+        .status-card-col {
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .status-card-col > div {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .status-card-col:hover {
+            background-color: rgba(0,0,0,0.02);
+        }
+
+        /* Card body adjustments */
+        .card-body {
+            padding: 1.25rem;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-body.p-0 {
+            padding: 0;
+        }
+
+        /* Row adjustments */
+        .row {
+            margin-left: -15px;
+            margin-right: -15px;
+        }
+
+        /* Column adjustments */
+        .col, .col-12, .col-md-4, .col-md-6 {
+            padding-left: 15px;
+            padding-right: 15px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 200px;
+            }
+            .chart-wrapper {
+                height: 200px;
+            }
+            #ph-chart {
+                max-height: 200px !important;
+            }
+            .ph-meter-circle {
+                width: 140px;
+                height: 140px;
+            }
+            .ph-meter-circle::before {
+                width: 120px;
+                height: 120px;
+            }
+            .ph-meter-circle .value-display {
+                font-size: 2.5rem;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Animation for new data point */
+        @keyframes new-point {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .new-data-point {
+            animation: new-point 0.5s ease-out;
+        }
+
+        /* Fix for container height issues - membuat persegi */
+        .ph-meter-container {
+            height: 180px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pump-status-container {
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Fix for chart container - membuat persegi */
+        .chart-card {
+            height: 350px;
+        }
+
+        .chart-card .card-body {
+            padding: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-card .card-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid rgba(0,0,0,.125);
+        }
+
+        .chart-card .chart-wrapper {
+            flex-grow: 1;
+            padding: 1rem;
+            height: 280px;
+        }
+
+        /* Fix for status card - membuat persegi */
+        .status-card {
+            height: 200px;
+        }
+
+        /* Fix for control panel - membuat persegi */
+        .control-panel {
+            height: 350px;
+        }
+
+        /* Fix for settings panel - membuat persegi */
+        .settings-panel {
+            height: 350px;
+        }
+
+        /* Memastikan semua card memiliki tinggi yang konsisten */
+        .card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-body {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Mengatur ukuran pH meter agar lebih compact */
+        .ph-meter-circle {
+            width: 150px;
+            height: 150px;
+        }
+
+        .ph-meter-circle::before {
+            width: 130px;
+            height: 130px;
+        }
+
+        .ph-meter-circle .value-display {
+            font-size: 2.5rem;
+        }
+
+        /* Fix for chart rendering issues */
+        canvas {
+            max-width: 100%;
+            height: auto !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="d-flex justify-content-between align-items-center mb-4">
+            <h1>PH Controller Dashboard</h1>
+            <div class="d-flex align-items-center">
+                <span id="connection-status" class="status-indicator status-disconnected"></span>
+                <span id="connection-text">Not Connected</span>
+            </div>
+        </header>
+
+        <!-- Status System Card -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card dashboard-card status-card equal-height-card">
+                    <div class="card-body p-0">
+                        <div class="row g-0 h-100">
+                            <div class="col-md-4 status-card-col">
+                                <div class="p-3 text-center border-end h-100 d-flex flex-column justify-content-center">
+                                    <h5 class="mb-2">System Status</h5>
+                                    <div class="d-flex justify-content-center align-items-center mb-2">
+                                        <span id="connection-status" class="status-indicator status-disconnected me-2"></span>
+                                        <span id="connection-text" class="fw-bold">Not Connected</span>
+                                    </div>
+                                    <div id="last-update" class="text-muted small">--</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 status-card-col">
+                                <div class="p-3 text-center border-end h-100 d-flex flex-column justify-content-center">
+                                    <h5 class="mb-2">Current pH</h5>
+                                    <div class="ph-meter-container position-relative d-flex justify-content-center align-items-center flex-grow-1">
+                                        <div class="ph-meter-circle position-relative">
+                                            <div class="value-display text-primary" id="ph-value">--</div>
+                                            <div class="ph-scale position-absolute w-100">
+                                                <div class="d-flex justify-content-between px-3">
+                                                    <span class="small">0</span>
+                                                    <span class="small">7</span>
+                                                    <span class="small">14</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4 status-card-col">
+                                <div class="p-3 text-center h-100 d-flex flex-column justify-content-center">
+                                    <h5 class="mb-2">Pump Status</h5>
+                                    <div class="pump-status-container d-flex flex-column align-items-center flex-grow-1">
+                                        <div class="pump-icon mb-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-droplet" viewBox="0 0 16 16">
+                                                <path fill-rule="evenodd" d="M7.21.8C7.69.295 8 0 8 0c.109.363.234.708.371 1.038.812 1.946 2.073 3.35 3.197 4.6C12.878 7.096 14 8.345 14 10a6 6 0 0 1-12 0C2 6.668 5.58 2.517 7.21.8zm.413 1.021A31.25 31.25 0 0 0 5.794 3.99c-.726.95-1.436 2.008-1.96 3.07C3.304 8.133 3 9.138 3 10a5 5 0 0 0 10 0c0-1.201-.796-2.157-2.181-3.7l-.03-.032C9.75 5.11 8.5 3.72 7.623 1.82z"/>
+                                                <path fill-rule="evenodd" d="M4.553 7.776c.82-1.641 1.717-2.753 2.093-3.13l.708.708c-.29.29-1.128 1.311-1.907 2.87l-.894-.448z"/>
+                                            </svg>
+                                        </div>
+                                        <div id="pump-status" class="badge bg-secondary fs-6">Unknown</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel Card -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card dashboard-card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title d-flex align-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-sliders me-2" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M11.5 2a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM9.05 3a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0V3h9.05zM4.5 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM2.05 8a2.5 2.5 0 0 1 4.9 0H16v1H6.95a2.5 2.5 0 0 1-4.9 0H0V8h2.05zm9.45 4a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zm-2.45 1a2.5 2.5 0 0 1 4.9 0H16v1h-2.05a2.5 2.5 0 0 1-4.9 0H0v-1h9.05z"/>
+                            </svg>
+                            Control Panel
+                        </h5>
+                        <div class="mode-toggle mt-4 mb-3">
+                            <div class="d-flex justify-content-center">
+                                <div class="btn-group" role="group">
+                                    <input type="radio" class="btn-check" name="mode" id="auto-mode" autocomplete="off" checked>
+                                    <label class="btn btn-outline-primary" for="auto-mode">Auto Mode</label>
+
+                                    <input type="radio" class="btn-check" name="mode" id="manual-mode" autocomplete="off">
+                                    <label class="btn btn-outline-primary" for="manual-mode">Manual Mode</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pump-controls mt-4">
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                                <button id="pump-on-btn" class="btn btn-success control-btn" disabled>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-power me-1" viewBox="0 0 16 16">
+                                        <path d="M7.5 1v7h1V1h-1z"/>
+                                        <path d="M3 8.812a4.999 4.999 0 0 1 2.578-4.375l-.485-.874A6 6 0 1 0 11 3.616l-.501.865A5 5 0 1 1 3 8.812z"/>
+                                    </svg>
+                                    Pump ON
+                                </button>
+                                <button id="pump-off-btn" class="btn btn-danger control-btn" disabled>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-power me-1" viewBox="0 0 16 16">
+                                        <path d="M7.5 1v7h1V1h-1z"/>
+                                        <path d="M3 8.812a4.999 4.999 0 0 1 2.578-4.375l-.485-.874A6 6 0 1 0 11 3.616l-.501.865A5 5 0 1 1 3 8.812z"/>
+                                    </svg>
+                                    Pump OFF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Card -->
+            <div class="col-md-6">
+                <div class="card dashboard-card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title d-flex align-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-gear me-2" viewBox="0 0 16 16">
+                                <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+                                <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+                            </svg>
+                            Settings
+                        </h5>
+                        <div class="settings-section mt-4">
+                            <div class="mb-4">
+                                <label for="ph-threshold" class="form-label">pH Threshold</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="ph-threshold" step="0.1" min="0" max="14" value="7.0">
+                                    <button class="btn btn-primary" type="button" id="save-threshold">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
+                                            <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z"/>
+                                        </svg>
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="refresh-rate" class="form-label">Refresh Rate (seconds)</label>
+                                <select class="form-select" id="refresh-rate">
+                                    <option value="1">1 second</option>
+                                    <option value="5" selected>5 seconds</option>
+                                    <option value="10">10 seconds</option>
+                                    <option value="30">30 seconds</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Card -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card dashboard-card">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">pH Level History</h5>
+                        <div class="chart-controls">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-secondary active" id="view-1h">1H</button>
+                                <button type="button" class="btn btn-outline-secondary" id="view-6h">6H</button>
+                                <button type="button" class="btn btn-outline-secondary" id="view-24h">24H</button>
+                                <button type="button" class="btn btn-outline-secondary" id="view-7d">7D</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="chart-wrapper">
+                            <canvas id="ph-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Chart with empty state
+        const ctx = document.getElementById('ph-chart').getContext('2d');
+
+        // Create placeholder data for the empty state
+        const emptyLabels = Array(10).fill('');
+        const emptyData = Array(10).fill(null);
+
+        const phChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: emptyLabels,
+                datasets: [{
+                    label: 'pH Value',
+                    data: emptyData,
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.05)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 0,
+                    pointHoverRadius: 0,
+                    spanGaps: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 0,
+                        max: 14,
+                        title: {
+                            display: true,
+                            text: 'pH Value',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        ticks: {
+                            stepSize: 1,
+                            font: {
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            drawBorder: false,
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        ticks: {
+                            maxRotation: 45,
+                            minRotation: 45,
+                            font: {
+                                size: 11
+                            }
+                        },
+                        grid: {
+                            drawBorder: false,
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        enabled: false // Disable tooltips for empty state
+                    },
+                    // Add a custom plugin to show "No data" message
+                    noData: {
+                        text: 'No data available. Waiting for connection...',
+                        fontColor: '#6c757d',
+                        fontSize: 14,
+                        fontStyle: 'italic'
+                    }
+                },
+                animation: {
+                    duration: 0 // No animation for empty state
+                }
+            }
+        });
+
+        // Custom plugin to display "No data" message
+        Chart.register({
+            id: 'noData',
+            afterDraw: function(chart) {
+                if (chart.data.datasets[0].data.every(val => val === null)) {
+                    const ctx = chart.ctx;
+                    const width = chart.width;
+                    const height = chart.height;
+
+                    ctx.restore();
+                    const fontSize = (height / 150).toFixed(2);
+                    ctx.font = fontSize + "em sans-serif";
+                    ctx.textBaseline = "middle";
+                    ctx.fillStyle = "#6c757d";
+                    ctx.textAlign = "center";
+
+                    const text = "No data available. Waiting for connection...";
+                    const textX = Math.round(width / 2);
+                    const textY = Math.round(height / 2);
+
+                    ctx.fillText(text, textX, textY);
+                    ctx.save();
+                }
+            }
+        });
+
+        // State variables
+        let isConnected = false;
+        let isAutoMode = true;
+        let phThreshold = 7.0;
+        let maxDataPoints = 20;
+
+        // DOM elements
+        const connectionStatus = document.getElementById('connection-status');
+        const connectionText = document.getElementById('connection-text');
+        const phValueDisplay = document.getElementById('ph-value');
+        const pumpStatusDisplay = document.getElementById('pump-status');
+        const lastUpdateDisplay = document.getElementById('last-update');
+        const autoModeRadio = document.getElementById('auto-mode');
+        const manualModeRadio = document.getElementById('manual-mode');
+        const pumpOnBtn = document.getElementById('pump-on-btn');
+        const pumpOffBtn = document.getElementById('pump-off-btn');
+        const phThresholdInput = document.getElementById('ph-threshold');
+        const saveThresholdBtn = document.getElementById('save-threshold');
+        const view1hBtn = document.getElementById('view-1h');
+        const view6hBtn = document.getElementById('view-6h');
+        const view24hBtn = document.getElementById('view-24h');
+        const view7dBtn = document.getElementById('view-7d');
+
+        // Event listeners for mode selection
+        autoModeRadio.addEventListener('change', () => {
+            if (isConnected && autoModeRadio.checked) {
+                isAutoMode = true;
+                updateControlButtons();
+                sendCommand('AUTO');
+            }
+        });
+
+        manualModeRadio.addEventListener('change', () => {
+            if (isConnected && manualModeRadio.checked) {
+                isAutoMode = false;
+                updateControlButtons();
+                sendCommand('MANUAL');
+            }
+        });
+
+        // Event listeners for pump control
+        pumpOnBtn.addEventListener('click', () => {
+            if (isConnected && !isAutoMode) {
+                sendCommand('PUMP_ON');
+                // Visual feedback
+                pumpOnBtn.classList.add('active');
+                setTimeout(() => pumpOnBtn.classList.remove('active'), 300);
+            }
+        });
+
+        pumpOffBtn.addEventListener('click', () => {
+            if (isConnected && !isAutoMode) {
+                sendCommand('PUMP_OFF');
+                // Visual feedback
+                pumpOffBtn.classList.add('active');
+                setTimeout(() => pumpOffBtn.classList.remove('active'), 300);
+            }
+        });
+
+        // Event listener for threshold setting
+        saveThresholdBtn.addEventListener('click', () => {
+            if (isConnected) {
+                const newThreshold = parseFloat(phThresholdInput.value);
+                if (!isNaN(newThreshold) && newThreshold >= 0 && newThreshold <= 14) {
+                    phThreshold = newThreshold;
+                    sendCommand(`SET_THRESHOLD:${phThreshold}`);
+
+                    // Visual feedback
+                    saveThresholdBtn.innerHTML = '<i class="bi bi-check-circle"></i> Saved';
+                    saveThresholdBtn.classList.remove('btn-outline-secondary');
+                    saveThresholdBtn.classList.add('btn-success');
+
+                    setTimeout(() => {
+                        saveThresholdBtn.innerHTML = 'Save';
+                        saveThresholdBtn.classList.remove('btn-success');
+                        saveThresholdBtn.classList.add('btn-outline-secondary');
+                    }, 2000);
+                }
+            }
+        });
+
+        // Event listeners for time range selection
+        const timeRangeButtons = [view1hBtn, view6hBtn, view24hBtn, view7dBtn];
+        const timeRanges = {
+            '1h': 12,   // 12 points for 1 hour (5 min intervals)
+            '6h': 24,   // 24 points for 6 hours (15 min intervals)
+            '24h': 24,  // 24 points for 24 hours (1 hour intervals)
+            '7d': 28    // 28 points for 7 days (6 hour intervals)
+        };
+
+        timeRangeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Update active state
+                timeRangeButtons.forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                button.classList.add('active');
+
+                // Update max data points based on selection
+                const range = button.id.replace('view-', '').toLowerCase();
+                maxDataPoints = timeRanges[range];
+
+                // Trim data if needed
+                while (phChart.data.labels.length > maxDataPoints) {
+                    phChart.data.labels.shift();
+                    phChart.data.datasets[0].data.shift();
+                }
+
+                // Update chart
+                phChart.update();
+            });
+        });
+
+        // Function to update control buttons state
+        function updateControlButtons() {
+            if (isAutoMode) {
+                autoModeRadio.checked = true;
+                pumpOnBtn.disabled = true;
+                pumpOffBtn.disabled = true;
+            } else {
+                manualModeRadio.checked = true;
+                pumpOnBtn.disabled = false;
+                pumpOffBtn.disabled = false;
+            }
+        }
+
+        // Function to update connection status
+        function updateConnectionStatus(connected) {
+            isConnected = connected;
+
+            // Update connection indicator
+            if (connected) {
+                connectionStatus.classList.remove('status-disconnected');
+                connectionStatus.classList.add('status-connected');
+                connectionText.textContent = 'Connected';
+
+                // Enable controls
+                autoModeRadio.disabled = false;
+                manualModeRadio.disabled = false;
+                saveThresholdBtn.disabled = false;
+
+                // Show status message
+                showNotification('Successfully connected to device', 'success');
+
+                // Reconfigure chart for connected state
+                const gradientFill = ctx.createLinearGradient(0, 0, 0, 400);
+                gradientFill.addColorStop(0, 'rgba(13, 110, 253, 0.5)');
+                gradientFill.addColorStop(1, 'rgba(13, 110, 253, 0.05)');
+
+                // Update chart configuration for connected state
+                phChart.data.labels = [];
+                phChart.data.datasets[0].data = [];
+                phChart.data.datasets[0].backgroundColor = gradientFill;
+                phChart.data.datasets[0].borderWidth = 3;
+                phChart.data.datasets[0].pointRadius = 4;
+                phChart.data.datasets[0].pointHoverRadius = 6;
+                phChart.data.datasets[0].pointBackgroundColor = [];
+                phChart.data.datasets[0].pointBorderColor = [];
+                phChart.data.datasets[0].pointRadius = [];
+                phChart.data.datasets[0].spanGaps = true;
+
+                // Enable tooltips for connected state
+                phChart.options.plugins.tooltip.enabled = true;
+                phChart.options.plugins.tooltip.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+                phChart.options.plugins.tooltip.titleColor = '#fff';
+                phChart.options.plugins.tooltip.bodyColor = '#fff';
+                phChart.options.plugins.tooltip.borderColor = '#0d6efd';
+                phChart.options.plugins.tooltip.borderWidth = 1;
+                phChart.options.plugins.tooltip.padding = 12;
+                phChart.options.plugins.tooltip.displayColors = false;
+                phChart.options.plugins.tooltip.callbacks = {
+                    title: function(tooltipItems) {
+                        return 'Time: ' + tooltipItems[0].label;
+                    },
+                    label: function(context) {
+                        return 'pH: ' + context.parsed.y.toFixed(2);
+                    }
+                };
+
+                // Enable animation for connected state
+                phChart.options.animation.duration = 750;
+                phChart.options.animation.easing = 'easeInOutQuart';
+
+                phChart.update();
+            } else {
+                connectionStatus.classList.remove('status-connected');
+                connectionStatus.classList.add('status-disconnected');
+                connectionText.textContent = 'Not Connected';
+
+                // Disable controls
+                autoModeRadio.disabled = true;
+                manualModeRadio.disabled = true;
+                pumpOnBtn.disabled = true;
+                pumpOffBtn.disabled = true;
+                saveThresholdBtn.disabled = true;
+
+                // Clear displays
+                phValueDisplay.textContent = '--';
+                pumpStatusDisplay.textContent = 'Unknown';
+                pumpStatusDisplay.className = 'badge bg-secondary fs-6';
+                lastUpdateDisplay.textContent = '--';
+
+                // Remove pump animation
+                const pumpIcon = document.querySelector('.pump-icon');
+                if (pumpIcon) {
+                    pumpIcon.classList.remove('pump-active');
+                }
+
+                // Reset pH meter color
+                const phMeter = document.querySelector('.ph-meter-circle');
+                if (phMeter) {
+                    phMeter.style.filter = '';
+                }
+
+                // Reset chart to empty state
+                const emptyLabels = Array(10).fill('');
+                const emptyData = Array(10).fill(null);
+
+                phChart.data.labels = emptyLabels;
+                phChart.data.datasets[0].data = emptyData;
+                phChart.data.datasets[0].backgroundColor = 'rgba(13, 110, 253, 0.05)';
+                phChart.data.datasets[0].borderWidth = 2;
+                phChart.data.datasets[0].pointRadius = 0;
+                phChart.data.datasets[0].pointHoverRadius = 0;
+                phChart.data.datasets[0].spanGaps = false;
+
+                // Disable tooltips for empty state
+                phChart.options.plugins.tooltip.enabled = false;
+
+                // Disable animation for empty state
+                phChart.options.animation.duration = 0;
+
+                phChart.update();
+            }
+
+            // Update control buttons state
+            updateControlButtons();
+        }
+
+        // Function to update data
+        function updateData(data) {
+            // Only process data if connected
+            if (!isConnected) return;
+
+            // Update pH value with animation
+            if (data.ph !== undefined) {
+                // Add animation class
+                phValueDisplay.classList.add('new-data-point');
+
+                // Update value
+                phValueDisplay.textContent = data.ph.toFixed(2);
+
+                // Update pH meter color based on value
+                const phMeter = document.querySelector('.ph-meter-circle');
+                if (data.ph < 6.5) {
+                    phMeter.style.filter = 'hue-rotate(0deg)'; // Red
+                } else if (data.ph < 7.5) {
+                    phMeter.style.filter = 'hue-rotate(90deg)'; // Green
+                } else {
+                    phMeter.style.filter = 'hue-rotate(180deg)'; // Blue
+                }
+
+                // Remove animation class after animation completes
+                setTimeout(() => {
+                    phValueDisplay.classList.remove('new-data-point');
+                }, 500);
+            }
+
+            // Update pump status with animation
+            if (data.pumpStatus !== undefined) {
+                const pumpIcon = document.querySelector('.pump-icon');
+
+                if (data.pumpStatus === 'ON') {
+                    pumpStatusDisplay.textContent = 'Pump ON';
+                    pumpStatusDisplay.className = 'badge bg-success fs-6';
+
+                    // Add animation to pump icon
+                    pumpIcon.classList.add('pump-active');
+                } else if (data.pumpStatus === 'OFF') {
+                    pumpStatusDisplay.textContent = 'Pump OFF';
+                    pumpStatusDisplay.className = 'badge bg-danger fs-6';
+
+                    // Remove animation from pump icon
+                    pumpIcon.classList.remove('pump-active');
+                }
+            }
+
+            // Update last update time
+            if (data.timestamp !== undefined) {
+                const date = new Date(data.timestamp);
+                lastUpdateDisplay.textContent = date.toLocaleString();
+            }
+
+            // Update chart only when connected and has data
+            if (isConnected && data.ph !== undefined && data.timestamp !== undefined) {
+                const date = new Date(data.timestamp);
+                const timeLabel = date.toLocaleTimeString();
+
+                // Add new data point with animation
+                phChart.data.labels.push(timeLabel);
+                phChart.data.datasets[0].data.push(data.ph);
+
+                // Highlight new data point
+                const pointIndex = phChart.data.datasets[0].data.length - 1;
+                const pointBackgroundColor = phChart.data.datasets[0].pointBackgroundColor || [];
+                const pointBorderColor = phChart.data.datasets[0].pointBorderColor || [];
+                const pointRadius = phChart.data.datasets[0].pointRadius || [];
+
+                // Store original values
+                const originalBgColor = pointBackgroundColor[pointIndex] || '#fff';
+                const originalBorderColor = pointBorderColor[pointIndex] || '#0d6efd';
+                const originalRadius = pointRadius[pointIndex] || 4;
+
+                // Highlight new point
+                pointBackgroundColor[pointIndex] = '#ffc107';
+                pointBorderColor[pointIndex] = '#ff6b00';
+                pointRadius[pointIndex] = 6;
+
+                phChart.data.datasets[0].pointBackgroundColor = pointBackgroundColor;
+                phChart.data.datasets[0].pointBorderColor = pointBorderColor;
+                phChart.data.datasets[0].pointRadius = pointRadius;
+
+                // Limit data points
+                if (phChart.data.labels.length > maxDataPoints) {
+                    phChart.data.labels.shift();
+                    phChart.data.datasets[0].data.shift();
+                    phChart.data.datasets[0].pointBackgroundColor.shift();
+                    phChart.data.datasets[0].pointBorderColor.shift();
+                    phChart.data.datasets[0].pointRadius.shift();
+                }
+
+                // Update chart
+                phChart.update('none'); // Update without animation for smoother real-time updates
+
+                // Reset highlight after a short delay
+                setTimeout(() => {
+                    phChart.data.datasets[0].pointBackgroundColor[pointIndex] = originalBgColor;
+                    phChart.data.datasets[0].pointBorderColor[pointIndex] = originalBorderColor;
+                    phChart.data.datasets[0].pointRadius[pointIndex] = originalRadius;
+                    phChart.update('none');
+                }, 2000);
+
+                // Check for pH threshold alerts
+                checkPhAlerts(data.ph);
+            }
+        }
+
+        // Function to send command to server
+        function sendCommand(command) {
+            fetch('/api/command', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ command: command }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Command sent successfully:', data);
+            })
+            .catch(error => {
+                console.error('Error sending command:', error);
+            });
+        }
+
+        // Function to check pH alerts
+        function checkPhAlerts(phValue) {
+            // Check if pH is out of normal range
+            if (phValue < 6.5 || phValue > 7.5) {
+                const alertType = phValue < 6.5 ? 'low' : 'high';
+                const alertMessage = phValue < 6.5 
+                    ? `pH is too low (${phValue.toFixed(2)}). Consider adjusting!`
+                    : `pH is too high (${phValue.toFixed(2)}). Consider adjusting!`;
+
+                showNotification(alertMessage, alertType);
+            }
+        }
+
+        // Function to show notification
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'low' ? 'danger' : type === 'high' ? 'warning' : 'info'} alert-dismissible fade show position-fixed`;
+            notification.style.top = '20px';
+            notification.style.right = '20px';
+            notification.style.zIndex = '1050';
+            notification.style.minWidth = '300px';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+
+            // Add to document
+            document.body.appendChild(notification);
+
+            // Auto dismiss after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 5000);
+        }
+
+        // Function to fetch data from server
+        function fetchData() {
+            fetch('/api/data')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    updateData(data);
+                    updateConnectionStatus(true);
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
+                    updateConnectionStatus(false);
+                    showNotification('Connection lost. Trying to reconnect...', 'danger');
+                });
+        }
+
+        // Function to initialize time range buttons
+        function initializeTimeRangeButtons() {
+            // Set 1h as default active
+            view1hBtn.classList.add('active');
+            maxDataPoints = timeRanges['1h'];
+        }
+
+        // Initialize with disconnected state
+        updateConnectionStatus(false);
+        updateControlButtons();
+        initializeTimeRangeButtons();
+
+        // Show initial notification
+        showNotification('Waiting for connection to device...', 'info');
+
+        // Start fetching data
+        fetchData();
+        setInterval(fetchData, 5000); // Fetch data every 5 seconds
+    </script>
+</body>
+</html>

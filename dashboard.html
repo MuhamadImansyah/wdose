@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h2><i class="fas fa-tachometer-alt"></i> Dashboard Monitoring pH</h2>
+    <div class="status-indicator">
+      <span class="status-dot" id="connection_status"></span>
+      <span id="connection_text">Menghubungkan...</span>
+    </div>
+  </div>
+
+  <!-- Top Row - Main Metrics -->
+  <div class="metrics-row">
+    <!-- Widget pH Terkini -->
+    <div class="widget square-widget current-ph-widget">
+      <div class="widget-header">
+        <h3><i class="fas fa-vial"></i> pH Saat Ini</h3>
+        <div class="widget-icon">
+          <i class="fas fa-flask animated-icon"></i>
+        </div>
+      </div>
+      <div class="ph-display">
+        <div class="ph-value" id="ph_value">-</div>
+        <div class="ph-status" id="ph_status">Menunggu data...</div>
+      </div>
+      <div class="ph-time" id="ph_time">-</div>
+      <div class="widget-footer">
+        <div class="progress-bar">
+          <div class="progress-fill" id="ph_progress"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Widget Trend -->
+    <div class="widget square-widget trend-widget">
+      <div class="widget-header">
+        <h3><i class="fas fa-chart-area"></i> Trend 24H</h3>
+        <div class="trend-indicator" id="trend_indicator">
+          <i class="fas fa-arrow-up"></i>
+        </div>
+      </div>
+      <div class="trend-display">
+        <div class="trend-value" id="trend_value">+0.2</div>
+        <div class="trend-label">Perubahan pH</div>
+      </div>
+      <div class="mini-chart">
+        <canvas id="mini_trend_chart" width="200" height="60"></canvas>
+      </div>
+    </div>
+
+    <!-- Widget Alerts -->
+    <div class="widget square-widget alerts-widget">
+      <div class="widget-header">
+        <h3><i class="fas fa-exclamation-triangle"></i> Peringatan</h3>
+        <div class="alert-count" id="alert_count">0</div>
+      </div>
+      <div class="alerts-list" id="alerts_list">
+        <div class="alert-item success">
+          <i class="fas fa-check-circle"></i>
+          <span>Sistem Normal</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Widget Quick Stats -->
+    <div class="widget square-widget stats-widget">
+      <div class="widget-header">
+        <h3><i class="fas fa-tachometer-alt"></i> Statistik</h3>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-value" id="avg_ph">7.2</div>
+          <div class="stat-label">Rata-rata</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="readings_today">142</div>
+          <div class="stat-label">Pembacaan</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="uptime">23h</div>
+          <div class="stat-label">Uptime</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="buffer_used">5ml</div>
+          <div class="stat-label">Buffer</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Second Row - Control & Monitoring -->
+  <div class="control-row">
+    <!-- Widget Control Panel -->
+    <div class="widget control-panel-widget">
+      <div class="widget-header">
+        <h3><i class="fas fa-sliders-h"></i> Panel Kontrol</h3>
+        <div class="system-status active" id="system_status">
+          <i class="fas fa-circle"></i> Aktif
+        </div>
+      </div>
+      <div class="control-grid">
+        <button class="control-btn primary" id="auto_dispense">
+          <i class="fas fa-magic"></i>
+          <span>Auto Dispense</span>
+          <small>pH < 6.5</small>
+        </button>
+        <button class="control-btn secondary" id="manual_dispense">
+          <i class="fas fa-hand-pointer"></i>
+          <span>Manual</span>
+          <small>Kontrol manual</small>
+        </button>
+        <button class="control-btn warning" id="emergency_stop">
+          <i class="fas fa-stop"></i>
+          <span>Stop</span>
+          <small>Hentikan semua</small>
+        </button>
+        <button class="control-btn info" id="calibrate_sensor">
+          <i class="fas fa-cog"></i>
+          <span>Kalibrasi</span>
+          <small>Setel sensor</small>
+        </button>
+      </div>
+    </div>
+
+    <!-- Widget Live Chart -->
+    <div class="widget chart-widget">
+      <div class="widget-header">
+        <h3><i class="fas fa-chart-line"></i> Monitoring Real-time</h3>
+        <div class="chart-controls">
+          <button class="chart-btn active" id="live_btn" data-mode="live"><i class="fas fa-play"></i> LIVE</button>
+          <button class="chart-btn" data-range="1h">1H</button>
+          <button class="chart-btn" data-range="4h">4H</button>
+          <button class="chart-btn" data-range="24h">24H</button>
+          <button id="chart_pause_btn" class="chart-btn"><i class="fas fa-pause"></i> Pause</button>
+          <button id="chart_clear_btn" class="chart-btn warning"><i class="fas fa-trash"></i> Clear</button>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="ph_chart" width="400" height="200"></canvas>
+      </div>
+      <div class="chart-legend">
+        <div class="legend-item">
+          <div class="legend-color" style="background: #0066d6;"></div>
+          <span>pH Value</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color" style="background: #28a745;"></div>
+          <span>Target Range</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="data-table-container">
+    <h3><i class="fas fa-database"></i> Data pH Terakhir</h3>
+    <div class="table-controls">
+      <input type="text" id="table_search" placeholder="Cari data...">
+      <button id="export_btn"><i class="fas fa-download"></i> Export</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>pH</th>
+          <th>Voltage</th>
+          <th>Waktu</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="readings_table">
+        {% for r in readings %}
+        <tr>
+          <td>{{ r.id }}</td>
+          <td>{{ "%.2f"|format(r.ph_value) }}</td>
+          <td>{{ "%.2f"|format(r.voltage) if r.voltage is defined else "-" }}</td>
+          <td>{{ r.timestamp }}</td>
+          <td>
+            <span class="status-badge {{ 'normal' if 6.5 <= r.ph_value <= 7.5 else 'warning' if 6.0 <= r.ph_value < 6.5 or 7.5 < r.ph_value <= 8.0 else 'danger' }}">
+              {{ "Normal" if 6.5 <= r.ph_value <= 7.5 else "Perhatian" if 6.0 <= r.ph_value < 6.5 or 7.5 < r.ph_value <= 8.0 else "Berbahaya" }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Include Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}

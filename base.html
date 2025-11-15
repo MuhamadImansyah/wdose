@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>W-Dose</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/Wdoselogo.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2.0">
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <img src="{{ url_for('static', filename='img/Wdoseheader.png') }}" alt="pH Controller Logo" class="logo">
+      <h1>PH Controller</h1>
+    </div>
+    
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
+    
+    <!-- Navigation -->
+    <nav class="nav-menu" id="navMenu">
+      <a href="{{ url_for('index') }}" class="nav-link {{ is_active('index') }}"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a>
+      <a href="{{ url_for('control') }}" class="nav-link {{ is_active('control') }}"><i class="fas fa-sliders-h"></i> <span>Manual Control</span></a>
+      <a href="{{ url_for('history') }}" class="nav-link {{ is_active('history') }}"><i class="fas fa-history"></i> <span>Riwayat pH</span></a>
+      <a href="{{ url_for('logs') }}" class="nav-link {{ is_active('logs') }}"><i class="fas fa-list-alt"></i> <span>Log</span></a>
+      <a href="{{ url_for('about') }}" class="nav-link {{ is_active('about') }}"><i class="fas fa-info-circle"></i> <span>About</span></a>
+    </nav>
+    
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+  </header>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flashes">
+        {% for cat, msg in messages %}
+          <li class="{{ cat }}">{{ msg }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer>
+    <small>PH Controller &copy; 2025 — Sistem Monitoring dan Kontrol pH Otomatis</small>
+  </footer>
+
+  <script>
+    const SERVER_TOKEN = "{{ config.SERVER_TOKEN if config is defined else '' }}";
+    const SOCKET_SERVER = location.protocol + '//' + location.hostname + ':5000';
+    
+    // Mobile Menu Toggle
+    document.addEventListener('DOMContentLoaded', function() {
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const navMenu = document.getElementById('navMenu');
+      const mobileOverlay = document.getElementById('mobileOverlay');
+      
+      function toggleMenu() {
+        mobileMenuBtn.classList.toggle('active');
+        navMenu.classList.toggle('active');
+        mobileOverlay.classList.toggle('active');
+        document.body.classList.toggle('menu-open');
+      }
+      
+      function closeMenu() {
+        mobileMenuBtn.classList.remove('active');
+        navMenu.classList.remove('active');
+        mobileOverlay.classList.remove('active');
+        document.body.classList.remove('menu-open');
+      }
+      
+      mobileMenuBtn.addEventListener('click', toggleMenu);
+      mobileOverlay.addEventListener('click', closeMenu);
+      
+      // Close menu when clicking nav links
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', closeMenu);
+      });
+      
+      // Close menu on window resize to desktop
+      window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+          closeMenu();
+        }
+      });
+    });
+  </script>
+  <script src="{{ url_for('static', filename='js/app.js') }}?v=2.0"></script>
+</body>
+</html>

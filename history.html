@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container">
+    <h2>Riwayat Pembacaan pH</h2>
+    <p>Data pH otomatis yang tersimpan di database.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Waktu</th>
+                <th>Nilai pH</th>
+                <th>Nilai Tegangan (Volt)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in records %}
+            <tr>
+                <td>{{ r.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>{{ "%.2f"|format(r.ph_value) }}</td>
+                <td>{{ "%.3f"|format(r.voltage) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
